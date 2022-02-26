@@ -30,7 +30,8 @@ repos:
   rev: v1.4
   hooks:
   - id: docformatter
-    args: ["--in-place", "--blank", "--pre-summary-newline", "-r"]
+    # args: ["--in-place", "--blank", "--pre-summary-newline", "-r"]
+    args: ["--in-place", "--blank", "-r"]
 - repo: https://github.com/pycqa/pydocstyle
   rev: 6.1.1
   hooks:
