@@ -314,6 +314,11 @@ class SessionServer:
     sessions while experiments are running. Or, do it programatically using
     `server.serve()` at the end of the experiment.
 
+    Alternatively, you can pass in a list of
+    `(session_name, session_output_dir)` tuples to `SessionServer`
+    >>> session_spec = (session.name, session.output_dir)
+    >>> server = et.SessionServer([session_spec], server_dir)
+
     """
 
     def __init__(self, sessions, output_dir):
@@ -327,20 +332,29 @@ class SessionServer:
 
         Parameters
         ----------
-        session : Sesssion
-                The `Session` to add. The session will be updated before it is
-                added to ensure that its outputs have been created.
+        session : Sesssion or (str, str)
+                The `Session` to add. If passing in a `Session`, the session
+                will be updated before it is added to ensure that its outputs
+                have been created. If `(str, str)`, the first `str` should be
+                the session name and the second should be the session output
+                directory. Ensure that session has been updated if using this
+                method.
 
         """
-        if session.name is None:
-            raise ValueError(
-                "Sessions must have names to be added to a session server."
-            )
-        # Update the session so that index.html is generated
-        session.update()
+        if isinstance(session, Session):
+            if session.name is None:
+                raise ValueError(
+                    "Sessions must have names to be added to a session server."
+                )
+            # Update the session so that index.html is generated
+            session.update()
+            sess_name = session.name
+            sess_output_dir = session.output_dir
+        else:
+            sess_name, sess_output_dir = session
         self.output_dir.mkdir(exist_ok=True, parents=True)
-        src_html_path = session.output_dir / "index.html"
-        dest_html_path = self.output_dir / f"{session.name}.html"
+        src_html_path = sess_output_dir / "index.html"
+        dest_html_path = self.output_dir / f"{sess_name}.html"
         if dest_html_path.is_file():
             dest_html_path.unlink()
         os.link(src_html_path, dest_html_path)
