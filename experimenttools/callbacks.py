@@ -1,5 +1,4 @@
-"""
-Callbacks for Session objects.
+"""Callbacks for Session objects.
 
 Callbacks can be used to run custom code when certain events happen in a
 session.
@@ -15,8 +14,7 @@ class SessionCallback:
         self.session = None
 
     def set_session(self, session):
-        """
-        Set the session.
+        """Set the session.
 
         This will automatically be called by the session a callback is
         being added to, so there is no need to call it manually.
@@ -35,8 +33,7 @@ class SessionCallback:
 
 
 class LambdaSessionCallback(SessionCallback):
-    """
-    Create a session callback with lambda functions.
+    """Create a session callback with lambda functions.
 
     Examples
     --------

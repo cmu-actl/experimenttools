@@ -34,7 +34,9 @@ def main():
     session = et.Session(session_dir, metrics=[m0, m1])
 
     # Automatically plot the metrics every 2 updates
-    with et.SessionManager(session, update_type="updates", update_freq=2, verbose=2).manage():
+    with et.SessionManager(
+        session, update_type="updates", update_freq=2, verbose=2
+    ).manage():
         for i in range(5):
             m0(i)
             m1(i**2)

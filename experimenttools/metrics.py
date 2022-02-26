@@ -1,5 +1,4 @@
-"""
-Track the values of metrics.
+"""Track the values of metrics.
 
 Metrics can be created and then their current value can be updated by calling
 them. Additionally, they can register callbacks to call every time the current
@@ -31,8 +30,7 @@ import holoviews as hv
 
 
 class Metric:
-    """
-    Base class for metrics. Does not actually track a value.
+    """Base class for metrics. Does not actually track a value.
 
     Implements the basic callback functionality. `Metric` objects can be
     added to `Session` objects so that the session can perform some
@@ -41,8 +39,7 @@ class Metric:
     """
 
     def __init__(self, name, initial_value=None, callbacks=None):
-        """
-        Create a new metric.
+        """Create a new metric.
 
         Parameters
         ----------
@@ -83,8 +80,7 @@ class Metric:
 
 
 class SerializableMetric(Metric):
-    """
-    Base class for metrics that can be serialized to a file.
+    """Base class for metrics that can be serialized to a file.
 
     `SerializableMetric` subclasses must implement `serialize(self,
     file)` which stores the current progess of a metric to a file. When
@@ -101,8 +97,7 @@ class SerializableMetric(Metric):
 
 
 class PlottableMetric(Metric):
-    """
-    Base class for metrics that can be plotted.
+    """Base class for metrics that can be plotted.
 
     `PlottableMetric` subclasses must implement `plot(self)` which
     returns a `holoviews.Element` plot of the current data.
@@ -115,8 +110,7 @@ class PlottableMetric(Metric):
 
 
 class TimedMetric(Metric):
-    """
-    Base class for capturing the time at which a metric is updated.
+    """Base class for capturing the time at which a metric is updated.
 
     Each time the metric is called with a new value, the current time
     offset by the time when the metric was first called is added to a

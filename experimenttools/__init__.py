@@ -1,5 +1,4 @@
-"""
-ExperimentTools.
+"""ExperimentTools.
 
 Tools for tracking, visualizing, and saving metrics from experiments.
 
