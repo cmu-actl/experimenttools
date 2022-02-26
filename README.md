@@ -67,5 +67,5 @@ Docs are built using `pdoc3`.
 
 ```shell
 pip install pdoc3
-make doc
+make docs
 ```
