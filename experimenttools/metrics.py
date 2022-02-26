@@ -50,10 +50,10 @@ class Metric:
                 The name of the metric.
         initial_value
                 The initial value of the metric.
-                >>> m = Metric('example_metric', 2)
+                >>> m = Metric("example_metric", 2)
 
                 is equivalent to running
-                >>> m = Metric('example_metric')
+                >>> m = Metric("example_metric")
                 >>> m(2)
 
         callbacks: list of callable

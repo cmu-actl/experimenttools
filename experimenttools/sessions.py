@@ -8,6 +8,10 @@ serialized together.
 `Session` outputs.
 
 """
+import contextlib
+import http.server
+import os
+import socket
 import time
 from datetime import datetime
 from pathlib import Path
@@ -28,8 +32,8 @@ class Session:
     --------
     >>> import experimenttools as et
     >>> import tempfile
-    >>> m0 = et.metrics.NumericMetric('m0')
-    >>> m1 = et.metrics.NumericMetric('m1')
+    >>> m0 = et.metrics.NumericMetric("m0")
+    >>> m1 = et.metrics.NumericMetric("m1")
     >>> session_dir = tempfile.mkdtemp()
     >>> session = et.Session(session_dir, metrics=[m0, m1])
     >>> for i in range(5):
@@ -43,6 +47,7 @@ class Session:
     def __init__(
         self,
         output_dir,
+        name=None,
         metrics=None,
         callbacks=None,
         plot_metrics=True,
@@ -53,8 +58,10 @@ class Session:
 
         Parameters
         ----------
-        output_dir: str or pathlib.Path
+        output_dir: path-like object
                 Directory to store session data in.
+        name: str
+                Name of the session, used if serving multiple sessions.
         metrics: list of Metric
                 The metrics to mointor.
         callbacks: list of Sessioncallback
@@ -65,12 +72,8 @@ class Session:
                 Whether or not to save metrics to files.
 
         """
-        if plot_metrics or serialize_metrics:
-            self.output_dir = Path(output_dir)
-            if plot_metrics:
-                self.index_file = self.output_dir / "index.html"
-            if serialize_metrics:
-                self.serialize_dir = self.output_dir / "serialized"
+        self.output_dir = Path(output_dir)
+        self.name = name
 
         self.callbacks = []
         if callbacks:
@@ -83,8 +86,11 @@ class Session:
             for metric in metrics:
                 self.add_metric(metric)
 
-        self.plot_metrics = plot_metrics
-        self.serialize_metrics = serialize_metrics
+        self._update_actions = []
+        if plot_metrics:
+            self._update_actions.append(self.plot)
+        if serialize_metrics:
+            self._update_actions.append(self.serialize)
 
     @property
     def metrics(self):
@@ -99,12 +105,12 @@ class Session:
         self.call_callbacks(lambda h: h.on_metric_add(metric))
 
     def add_callback(self, callback):
-        """Add a `Sessioncallback` to the session."""
+        """Add a `SessionCallback` to the session."""
         callback.set_session(self)
         self.callbacks.append(callback)
 
     def remove_callback(self, callback):
-        """Remove a `Sessioncallback` from the session."""
+        """Remove a `SessionCallback` from the session."""
         self.callbacks.remove(callback)
 
     def call_callbacks(self, fn):
@@ -114,10 +120,8 @@ class Session:
 
     def update(self):
         """Update the session outputs."""
-        if self.plot_metrics:
-            self.plot()
-        if self.serialize_metrics:
-            self.serialize()
+        for action in self._update_actions:
+            action()
         self.call_callbacks(lambda h: h.on_update())
 
     def plot(self):
@@ -128,15 +132,16 @@ class Session:
             if isinstance(metric, PlottableMetric):
                 plots.append(metric.plot())
         layout = hv.Layout(plots)
-        hv.save(layout, self.index_file)
+        hv.save(layout, self.output_dir / "index.html")
 
     def serialize(self):
         """Serialize all serializable metrics."""
         self.output_dir.mkdir(exist_ok=True, parents=True)
-        self.serialize_dir.mkdir(exist_ok=True)
+        serialize_dir = self.output_dir / "serialized"
+        serialize_dir.mkdir(exist_ok=True)
         for metric in self._metrics:
             if isinstance(metric, SerializableMetric):
-                metric.serialize(self.serialize_dir / metric.name)
+                metric.serialize(serialize_dir / metric.name)
 
 
 class SessionManager:
@@ -151,22 +156,22 @@ class SessionManager:
     --------
     >>> import experimenttools as et
     >>> import tempfile
-    >>> m0 = et.metrics.NumericMetric('m0')
+    >>> m0 = et.metrics.NumericMetric("m0")
     >>> session_dir = tempfile.mkdtemp()
     >>> session = et.Session(session_dir, metrics=[m0])
-    >>> manager = et.SessionManager(session, update_type='updates')
+    >>> manager = et.SessionManager(session, update_type="updates")
     >>> _ = manager.manage()
     >>> for i in range(120):
     ...     m0(i) # m0 will be plotted and serialized every 60th update
     >>> manager.close()
 
     As a context manager
-    >>> with SessionManager(session, update_type='updates').manage():
+    >>> with SessionManager(session, update_type="updates").manage():
     ...     for i in range(120):
     ...         m0(i)
     >>> m0(1) # Manager no longer managing the session
 
-    >>> manager = SessionManager(session, update_type='updates')
+    >>> manager = SessionManager(session, update_type="updates")
     >>> with manager.manage():
     ...     for i in range(120):
     ...         m0(i)
@@ -282,3 +287,93 @@ class SessionManager:
                 self._num_updates = 0
             else:
                 self._num_updates += 1
+
+
+class SessionServer:
+    """
+    Handles serving of session files.
+
+    Allows for multiple sessions to be displayed on the same server. Gathers
+    the html files generated by each session and links them to an output
+    directory. Then, that directory can be served.
+
+    Examples
+    --------
+    >>> import experimenttools as et
+    >>> import tempfile
+    >>> m0 = et.metrics.NumericMetric("m0")
+    >>> session_dir = tempfile.mkdtemp()
+    >>> server_dir = tempfile.mkdtemp()
+    >>> session = et.Session(session_dir, name="sess", metrics=[m0])
+    >>> server = et.SessionServer([session], server_dir)
+    >>> for i in range(5):
+    ...     m0(i)
+    >>> session.plot() # Writes plots to 'experiment/index.html'
+
+    Then, run `python -m http.server --directory SERVER_DIR` to serve the
+    sessions while experiments are running. Or, do it programatically using
+    `server.serve()` at the end of the experiment.
+
+    """
+
+    def __init__(self, sessions, output_dir):
+        self.output_dir = Path(output_dir)
+        for session in sessions:
+            self.add_session(session)
+
+    def add_session(self, session):
+        """
+        Add a session to the server.
+
+        Parameters
+        ----------
+        session : Sesssion
+                The `Session` to add. The session will be updated before it is
+                added to ensure that its outputs have been created.
+
+        """
+        if session.name is None:
+            raise ValueError(
+                "Sessions must have names to be added to a session server."
+            )
+        # Update the session so that index.html is generated
+        session.update()
+        self.output_dir.mkdir(exist_ok=True, parents=True)
+        src_html_path = session.output_dir / "index.html"
+        dest_html_path = self.output_dir / f"{session.name}.html"
+        if dest_html_path.is_file():
+            dest_html_path.unlink()
+        os.link(src_html_path, dest_html_path)
+
+    def serve(self, port=8000, bind="127.0.0.1"):
+        """
+        Start the server.
+
+        Parameters
+        ----------
+        port: int
+                The port to serve to.
+        bind: str
+                The bind address.
+
+        """
+        output_dir = self.output_dir
+
+        class DualStackServer(http.server.ThreadingHTTPServer):
+            def server_bind(self):
+                # suppress exception when protocol is IPv4
+                with contextlib.suppress(Exception):
+                    self.socket.setsockopt(socket.IPPROTO_IPV6, socket.IPV6_V6ONLY, 0)
+                return super().server_bind()
+
+            def finish_request(self, request, client_address):
+                self.RequestHandlerClass(
+                    request, client_address, self, directory=str(output_dir)
+                )
+
+        http.server.test(
+            HandlerClass=http.server.SimpleHTTPRequestHandler,
+            ServerClass=DualStackServer,
+            port=port,
+            bind=bind,
+        )
