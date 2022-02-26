@@ -1,3 +1,5 @@
+[![Python package](https://github.com/cmu-actl/experimenttools/actions/workflows/python-package.yml/badge.svg)](https://github.com/cmu-actl/experimenttools/actions/workflows/python-package.yml)
+
 # ExperimentTools
 
 Tools for tracking, visualizing, and saving metrics from experiments.
