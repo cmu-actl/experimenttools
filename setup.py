@@ -12,6 +12,6 @@ setuptools.setup(
     long_description=long_description,
     long_description_content_type="text/markdown",
     classifiers=["Programming Language :: Python :: 3"],
-    python_requires=">=3.6",
+    python_requires=">=3.7",
     install_requires=["holoviews[recommended]"],
 )
