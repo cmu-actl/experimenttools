@@ -17,10 +17,12 @@ Examples
 >>> m(3)
 >>> m.value
 3
->>> m.values()
+>>> m.values
 [2, 3]
 >>> import holoviews as hv
->>> hv.save(m.plot(), "image.html")
+>>> import tempfile
+>>> f = tempfile.NamedTemporaryFile(suffix=".html")
+>>> hv.save(m.plot(), f.name)
 
 """
 from time import time as curr_time

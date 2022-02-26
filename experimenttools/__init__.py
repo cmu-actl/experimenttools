@@ -10,15 +10,18 @@ then be added to a `Session` which can plot and save the metrics.
 
 Examples
 --------
+>>> import experimenttools as et
+>>> import tempfile
+>>> import time
 >>> m0 = et.metrics.NumericMetric("m0")
 >>> m1 = et.metrics.TimedNumericMetric("m1")
->>> session_dir = tempfile.mkdtemp(prefix="experimenttools_example_session_manager_")
+>>> session_dir = tempfile.mkdtemp()
 >>> session = et.Session(session_dir, metrics=[m0, m1])
 >>> with et.SessionManager(session, update_type="updates", update_freq=2).manage():
->>>     for i in range(5):
->>>         m0(i)
->>>         m1(i**2)
->>>         time.sleep(0.25)
+...     for i in range(5):
+...         m0(i)
+...         m1(i**2)
+...         time.sleep(0.25)
 
 """
 

@@ -26,14 +26,17 @@ class Session:
 
     Examples
     --------
-    >>> m0 = NumericalMetric('m0')
-    >>> m1 = NumericalMetric('m1')
-    >>> session = Session('experiment', metrics=[m0, m1])
+    >>> import experimenttools as et
+    >>> import tempfile
+    >>> m0 = et.metrics.NumericMetric('m0')
+    >>> m1 = et.metrics.NumericMetric('m1')
+    >>> session_dir = tempfile.mkdtemp()
+    >>> session = et.Session(session_dir, metrics=[m0, m1])
     >>> for i in range(5):
-    >>>     m0(i)
-    >>>     m1(2*i)
+    ...     m0(i)
+    ...     m1(2*i)
     >>> session.plot() # Writes plots to 'experiment/index.html'
-    >>> session.serialize_metrics() # Writes to 'experiments/serialized'
+    >>> session.serialize() # Writes to 'experiments/serialized'
 
     """
 
@@ -146,24 +149,27 @@ class SessionManager:
 
     Examples
     --------
-    >>> m0 = NumericalMetric('m0')
-    >>> session = Session('experiment', metrics=[m0])
-    >>> manager = SessionManager(session, update_type='updates')
-    >>> manager.manage()
+    >>> import experimenttools as et
+    >>> import tempfile
+    >>> m0 = et.metrics.NumericMetric('m0')
+    >>> session_dir = tempfile.mkdtemp()
+    >>> session = et.Session(session_dir, metrics=[m0])
+    >>> manager = et.SessionManager(session, update_type='updates')
+    >>> _ = manager.manage()
     >>> for i in range(120):
-    >>>     m0(i) # m0 will be plotted and serialized every 60th update
+    ...     m0(i) # m0 will be plotted and serialized every 60th update
     >>> manager.close()
 
     As a context manager
     >>> with SessionManager(session, update_type='updates').manage():
-    >>>     for i in range(120):
-    >>>         m0(i)
+    ...     for i in range(120):
+    ...         m0(i)
     >>> m0(1) # Manager no longer managing the session
 
     >>> manager = SessionManager(session, update_type='updates')
     >>> with manager.manage():
-    >>>     for i in range(120):
-    >>>         m0(i)
+    ...     for i in range(120):
+    ...         m0(i)
 
     """
 
@@ -189,7 +195,6 @@ class SessionManager:
         self._verbose = verbose
         self._session = session
         self._managing = False
-        self._update_type = update_type
         self._session_callback = LambdaSessionCallback(
             on_metric_add=lambda m: m.add_callback(self.process_metric_update)
         )
@@ -265,19 +270,15 @@ class SessionManager:
 
     def process_metric_update(self, _):
         """Update the session if the update frequency has been reached."""
-        if self._update_type == "seconds":
+        try:
             if time.time() - self._last_update_seconds >= self._update_freq:
                 self._log(2, "Updating session")
                 self._session.update()
                 self._last_update_seconds = time.time()
-        elif self._update_type == "updates":
+        except AttributeError:
             if self._num_updates + 1 >= self._update_freq:
                 self._log(2, "Updating session")
                 self._session.update()
                 self._num_updates = 0
             else:
                 self._num_updates += 1
-        else:
-            raise ValueError(
-                f"Uknown value for parameter 'update_type': '{self._update_type}'"
-            )

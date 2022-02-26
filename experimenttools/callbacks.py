@@ -40,9 +40,13 @@ class LambdaSessionCallback(SessionCallback):
 
     Examples
     --------
-    >>> callback = LambdaSessionCallback(on_sesson_start=lambda _: print("Hello World"))
-    >>> session = Session('output_dir', callbacks=[callback])
-    'Hello World'
+    >>> import experimenttools as et
+    >>> import tempfile
+    >>> session_dir = tempfile.mkdtemp()
+    >>> callback = et.callbacks.LambdaSessionCallback(
+    ...     on_session_start=lambda: print("Hello World"))
+    >>> session = et.Session(session_dir, callbacks=[callback])
+    Hello World
 
     """
 
