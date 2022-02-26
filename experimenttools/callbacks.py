@@ -1,25 +1,25 @@
 """
-Hooks for Session objects.
+Callbacks for Session objects.
 
-Hooks can be used to run custom code when certain events happen in a
+Callbacks can be used to run custom code when certain events happen in a
 session.
 
 """
 
 
-class SessionHook:
-    """Base class for a session hook."""
+class SessionCallback:
+    """Base class for a session callback."""
 
     def __init__(self):
-        """Create a new sessoin hook."""
+        """Create a new sessoin callback."""
         self.session = None
 
     def set_session(self, session):
         """
         Set the session.
 
-        This will automatically be called by the session a hook is being
-        added to, so there is no need to call it manually.
+        This will automatically be called by the session a callback is
+        being added to, so there is no need to call it manually.
 
         """
         self.session = session
@@ -34,20 +34,20 @@ class SessionHook:
         """Take action when the session outputs are being updated."""
 
 
-class LambdaSessionHook(SessionHook):
+class LambdaSessionCallback(SessionCallback):
     """
-    Create a session hook with lambda functions.
+    Create a session callback with lambda functions.
 
     Examples
     --------
-    >>> hook = LambdaSessionHook(on_sesson_start=lambda _: print("Hello World"))
-    >>> session = Session('output_dir', hooks=[hook])
+    >>> callback = LambdaSessionCallback(on_sesson_start=lambda _: print("Hello World"))
+    >>> session = Session('output_dir', callbacks=[callback])
     'Hello World'
 
     """
 
     def __init__(self, on_session_start=None, on_metric_add=None, on_update=None):
-        """Use lambda functions for the session hooks."""
+        """Use lambda functions for the session callbacks."""
         if on_session_start:
             self.on_session_start = on_session_start
         if on_metric_add:

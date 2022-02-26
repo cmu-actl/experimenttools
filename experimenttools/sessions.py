@@ -14,7 +14,7 @@ from pathlib import Path
 
 import holoviews as hv
 
-from experimenttools.hooks import LambdaSessionHook
+from experimenttools.callbacks import LambdaSessionCallback
 from experimenttools.metrics import PlottableMetric, SerializableMetric
 
 hv.extension("bokeh")
@@ -41,7 +41,7 @@ class Session:
         self,
         output_dir,
         metrics=None,
-        hooks=None,
+        callbacks=None,
         plot_metrics=True,
         serialize_metrics=True,
     ):
@@ -54,8 +54,8 @@ class Session:
                 Directory to store session data in.
         metrics: list of Metric
                 The metrics to mointor.
-        hooks: list of SessionHook
-                Hooks to add to the session.
+        callbacks: list of Sessioncallback
+                callbacks to add to the session.
         plot_metrics: bool
                 Whether or not to plots metrics.
         serialize_metrics: bool
@@ -69,11 +69,11 @@ class Session:
             if serialize_metrics:
                 self.serialize_dir = self.output_dir / "serialized"
 
-        self.hooks = []
-        if hooks:
-            for hook in hooks:
-                self.add_hook(hook)
-        self.call_hooks(lambda h: h.on_session_start())
+        self.callbacks = []
+        if callbacks:
+            for callback in callbacks:
+                self.add_callback(callback)
+        self.call_callbacks(lambda h: h.on_session_start())
 
         self._metrics = []
         if metrics:
@@ -93,21 +93,21 @@ class Session:
         if metric.name in [m.name for m in self._metrics]:
             raise ValueError(f"Session already has metric with name: {metric.name}")
         self._metrics.append(metric)
-        self.call_hooks(lambda h: h.on_metric_add(metric))
+        self.call_callbacks(lambda h: h.on_metric_add(metric))
 
-    def add_hook(self, hook):
-        """Add a `SessionHook` to the session."""
-        hook.set_session(self)
-        self.hooks.append(hook)
+    def add_callback(self, callback):
+        """Add a `Sessioncallback` to the session."""
+        callback.set_session(self)
+        self.callbacks.append(callback)
 
-    def remove_hook(self, hook):
-        """Remove a `SessionHook` from the session."""
-        self.hooks.remove(hook)
+    def remove_callback(self, callback):
+        """Remove a `Sessioncallback` from the session."""
+        self.callbacks.remove(callback)
 
-    def call_hooks(self, fn):
-        """Call a function with each hook as an argument."""
-        for hook in self.hooks:
-            fn(hook)
+    def call_callbacks(self, fn):
+        """Call a function with each callback as an argument."""
+        for callback in self.callbacks:
+            fn(callback)
 
     def update(self):
         """Update the session outputs."""
@@ -115,7 +115,7 @@ class Session:
             self.plot()
         if self.serialize_metrics:
             self.serialize()
-        self.call_hooks(lambda h: h.on_update())
+        self.call_callbacks(lambda h: h.on_update())
 
     def plot(self):
         """Plot all plottable metrics."""
@@ -190,7 +190,7 @@ class SessionManager:
         self._session = session
         self._managing = False
         self._update_type = update_type
-        self._session_hook = LambdaSessionHook(
+        self._session_callback = LambdaSessionCallback(
             on_metric_add=lambda m: m.add_callback(self.process_metric_update)
         )
         if update_type == "seconds":
@@ -224,7 +224,7 @@ class SessionManager:
             raise RuntimeError("SessionManager is already managing")
         self._log(2, "Beginning management")
         self._managing = True
-        self._session.add_hook(self._session_hook)
+        self._session.add_callback(self._session_callback)
         for m in self._session.metrics:
             m.add_callback(self.process_metric_update)
         return self
@@ -245,7 +245,7 @@ class SessionManager:
         if not self._managing:
             raise RuntimeError("SessionManager is already closed")
         self._log(2, "Ending management")
-        self._session.remove_hook(self._session_hook)
+        self._session.remove_callback(self._session_callback)
         for m in self._session.metrics:
             m.remove_callback(self.process_metric_update)
 
