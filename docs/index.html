@@ -38,11 +38,11 @@ together using <code>SessionServer</code> objects.</p>
 &gt;&gt;&gt; session_dir = tempfile.mkdtemp()
 &gt;&gt;&gt; server_dir = tempfile.mkdtemp()
 &gt;&gt;&gt; session = et.Session(session_dir, name=&quot;sess&quot;, metrics=[m0, m1])
-&gt;&gt;&gt; with et.SessionManager(session, update_type=&quot;updates&quot;, update_freq=2).manage():
-...     for i in range(5):
-...         m0(i)
-...         m1(i**2)
-...         time.sleep(0.25)
+&gt;&gt;&gt; manager = et.SessionManager(session, update_type=&quot;updates&quot;, update_freq=2).manage()
+&gt;&gt;&gt; for i in range(5):
+...     m0(i)
+...     m1(i**2)
+...     time.sleep(0.25)
 </code></pre>
 <p>run <code>python -m experimenttools.sessionserver SESSION_DIR</code> to serve the sesssion.</p>
 <details class="source">
@@ -69,11 +69,11 @@ Examples
 &gt;&gt;&gt; session_dir = tempfile.mkdtemp()
 &gt;&gt;&gt; server_dir = tempfile.mkdtemp()
 &gt;&gt;&gt; session = et.Session(session_dir, name=&#34;sess&#34;, metrics=[m0, m1])
-&gt;&gt;&gt; with et.SessionManager(session, update_type=&#34;updates&#34;, update_freq=2).manage():
-...     for i in range(5):
-...         m0(i)
-...         m1(i**2)
-...         time.sleep(0.25)
+&gt;&gt;&gt; manager = et.SessionManager(session, update_type=&#34;updates&#34;, update_freq=2).manage()
+&gt;&gt;&gt; for i in range(5):
+...     m0(i)
+...     m1(i**2)
+...     time.sleep(0.25)
 
 run `python -m experimenttools.sessionserver SESSION_DIR` to serve the sesssion.
 

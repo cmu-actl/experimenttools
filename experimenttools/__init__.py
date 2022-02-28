@@ -18,11 +18,11 @@ Examples
 >>> session_dir = tempfile.mkdtemp()
 >>> server_dir = tempfile.mkdtemp()
 >>> session = et.Session(session_dir, name="sess", metrics=[m0, m1])
->>> with et.SessionManager(session, update_type="updates", update_freq=2).manage():
-...     for i in range(5):
-...         m0(i)
-...         m1(i**2)
-...         time.sleep(0.25)
+>>> manager = et.SessionManager(session, update_type="updates", update_freq=2).manage()
+>>> for i in range(5):
+...     m0(i)
+...     m1(i**2)
+...     time.sleep(0.25)
 
 run `python -m experimenttools.sessionserver SESSION_DIR` to serve the sesssion.
 

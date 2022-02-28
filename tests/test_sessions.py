@@ -58,16 +58,61 @@ class TestSessions(unittest.TestCase):
 
         with tempfile.TemporaryDirectory(prefix="experimenttools_tests_") as tmpdir:
             session = et.Session(tmpdir, metrics=[m0])
+            et.SessionManager(session, update_type="updates", update_freq=2).manage()
+            m0_expected = []
+            for i in range(5):
+                m0(i)
+                m0_expected.append(i)
+
+            # Last metric update should not have triggered a session update
+            m0_expected = m0_expected[:-1]
+            tmpdir = Path(tmpdir)
+            self.assertTrue((tmpdir / "index.html").is_file())
+            with open(tmpdir / "serialized" / "m0.txt") as f:
+                m0_actual = [int(l) for l in f.read().split()[1:]]
+            self.assertListEqual(m0_expected, m0_actual)
+
+    def test_session_manager_close(self):
+        m0 = et.metrics.NumericMetric("m0")
+
+        with tempfile.TemporaryDirectory(prefix="experimenttools_tests_") as tmpdir:
+            session = et.Session(tmpdir, metrics=[m0])
+            manager = et.SessionManager(
+                session, update_type="updates", update_freq=2
+            ).manage()
+            m0_expected = []
+            for i in range(6):
+                m0(i)
+                m0_expected.append(i)
+
+            manager.close()
+            # Should not triggered a session updates
+            for i in range(6):
+                m0(i * i)
+
+            tmpdir = Path(tmpdir)
+            self.assertTrue((tmpdir / "index.html").is_file())
+            with open(tmpdir / "serialized" / "m0.txt") as f:
+                m0_actual = [int(l) for l in f.read().split()[1:]]
+            self.assertListEqual(m0_expected, m0_actual)
+
+    def test_session_manager_context(self):
+        m0 = et.metrics.NumericMetric("m0")
+
+        with tempfile.TemporaryDirectory(prefix="experimenttools_tests_") as tmpdir:
+            session = et.Session(tmpdir, metrics=[m0])
             with et.SessionManager(
                 session, update_type="updates", update_freq=2
             ).manage():
                 m0_expected = []
-                for i in range(5):
+                for i in range(6):
                     m0(i)
                     m0_expected.append(i)
 
-            # Last metric update should not have triggered a session update
-            m0_expected = m0_expected[:-1]
+            # Should not triggered a session updates
+            for i in range(6):
+                m0(i * i)
+
             tmpdir = Path(tmpdir)
             self.assertTrue((tmpdir / "index.html").is_file())
             with open(tmpdir / "serialized" / "m0.txt") as f:

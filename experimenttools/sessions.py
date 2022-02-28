@@ -155,7 +155,9 @@ class SessionManager:
     >>> _ = manager.manage()
     >>> for i in range(120):
     ...     m0(i) # m0 will be plotted and serialized every 60th update
-    >>> manager.close()
+    >>> manager.close() # Stop tracking metric updates
+    >>> for i in range(120):
+    ...     m0(i) # Session will not be updated automatically because manager is closed
 
     As a context manager
     >>> with SessionManager(session, update_type="updates").manage():
