@@ -107,12 +107,18 @@ class SessionServer:
                     request, client_address, self, directory=str(output_dir)
                 )
 
-        http.server.test(
-            HandlerClass=http.server.SimpleHTTPRequestHandler,
-            ServerClass=DualStackServer,
-            port=port,
-            bind=bind,
-        )
+        _run_server(ServerClass=DualStackServer, port=port, bind=bind)
+
+
+def _run_server(ServerClass, protocol="HTTP/1.0", port=8000, bind=None):
+    HandlerClass = http.server.SimpleHTTPRequestHandler
+    ServerClass.address_family, addr = http.server._get_best_family(bind, port)
+    HandlerClass.protocol_version = protocol
+    with ServerClass(addr, HandlerClass) as httpd:
+        host, port = httpd.socket.getsockname()[:2]
+        url_host = f"[{host}]" if ":" in host else host
+        print(f"Serving HTTP on {host} port {port} " f"(http://{url_host}:{port}/) ...")
+        httpd.serve_forever()
 
 
 if __name__ == "__main__":
@@ -131,26 +137,30 @@ if __name__ == "__main__":
     parser.add_argument("--bind", default="127.0.0.1", help="Bind address for serving.")
     args = parser.parse_args()
 
+    if args.session_name:
+        if len(args.session_name) != len(args.session_dir):
+            raise ValueError(
+                "Number of 'session_name's specified must match number of "
+                "'session_dir's"
+            )
+        session_name = args.session_name
+    else:
+        session_name = [Path(sd).parent.name for sd in args.session_dir]
+
     # Create local temporary directory to prevent cross-device links
     local_tmp = Path(".tmp").resolve()
-    local_tmp.mkdir(exist_ok=True)
-    with tempfile.TemporaryDirectory(
-        prefix="experimenttools_server", dir=local_tmp
-    ) as tmp_dir:
-        if args.session_name:
-            if len(args.session_name) != len(args.session_dir):
-                raise ValueError(
-                    "Number of 'session_name's specified must match number of "
-                    "'session_dir's"
-                )
-            session_name = args.session_name
-        else:
-            session_name = [Path(sd).parent.name for sd in args.session_dir]
-        server = SessionServer(zip(session_name, args.session_dir), tmp_dir)
-        server.serve(port=args.port, bind=args.bind)
-
-    # Remove local temp directory if empty
     try:
-        local_tmp.rmdir()
-    except OSError:
-        pass
+        local_tmp.mkdir(exist_ok=True)
+        with tempfile.TemporaryDirectory(
+            prefix="experimenttools_server", dir=local_tmp
+        ) as tmp_dir:
+            server = SessionServer(zip(session_name, args.session_dir), tmp_dir)
+            server.serve(port=args.port, bind=args.bind)
+    except (KeyboardInterrupt, OSError) as e:
+        # Remove local temp directory if empty
+        try:
+            local_tmp.rmdir()
+        except OSError:
+            pass
+        if isinstance(e, OSError):
+            raise e
