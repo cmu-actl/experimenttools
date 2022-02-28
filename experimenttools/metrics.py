@@ -62,7 +62,7 @@ class Metric:
         if callbacks:
             for callback in callbacks:
                 self.add_callback(callback)
-        if initial_value:
+        if initial_value is not None:
             self(initial_value)
 
     def __call__(self, *args, **kwargs):
@@ -119,7 +119,6 @@ class TimedMetric(Metric):
     """
 
     def __init__(self, *args, **kwargs):
-        """Time the progression of a metric."""
         self._times = []
         self._start_time = None
         super().__init__(*args, **kwargs)
@@ -160,10 +159,78 @@ class NumericMetric(SerializableMetric, PlottableMetric):
         self._values.append(value)
         super().__call__(value, *args, **kwargs)
 
+    def __iadd__(self, val):
+        """Add to the most recent value of a numeric metric."""
+        self(self.value + val)
+        return self
+
+    def __isub__(self, val):
+        """Subtract from the most recent value of a numeric metric."""
+        self(self.value - val)
+        return self
+
+    def __imul__(self, val):
+        """Multiply the most recent value of a numeric metric."""
+        self(self.value * val)
+        return self
+
+    def __ifloordiv__(self, val):
+        """Floor divide the most recent value of a numeric metric."""
+        self(self.value // val)
+        return self
+
+    def __idiv__(self, val):
+        """Divide the most recent value of a numeric metric."""
+        self(self.value / val)
+        return self
+
+    def __itruediv__(self, val):
+        """Divide the most recent value of a numeric metric."""
+        self(self.value / val)
+        return self
+
+    def __imod__(self, val):
+        """Mod the most recent value of a numeric metric."""
+        self(self.value % val)
+        return self
+
+    def __ipow__(self, val):
+        """Pow the most recent value of a numeric metric."""
+        self(self.value ** val)
+        return self
+
+    def __ilshift__(self, val):
+        """Lshift the most recent value of a numeric metric."""
+        self(self.value << val)
+        return self
+
+    def __irshift__(self, val):
+        """Rshift the most recent value of a numeric metric."""
+        self(self.value >> val)
+        return self
+
+    def __iand__(self, val):
+        """And the most recent value of a numeric metric."""
+        self(self.value & val)
+        return self
+
+    def __ior__(self, val):
+        """Or the most recent value of a numeric metric."""
+        self(self.value | val)
+        return self
+
+    def __ixor__(self, val):
+        """Xor the most recent value of a numeric metric."""
+        self(self.value ^ val)
+        return self
+
     @property
     def value(self):
         """Get the current metric value."""
-        return self._values[-1]
+        try:
+            return self._values[-1]
+        except IndexError as e:
+            raise ValueError("Metric has not been assigned a value yet.") from e
 
     @property
     def values(self):

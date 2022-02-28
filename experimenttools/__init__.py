@@ -23,11 +23,10 @@ Examples
 ...         m0(i)
 ...         m1(i**2)
 ...         time.sleep(0.25)
->>> server = et.SessionServer([session], server_dir)
 
-Use `python -m http.server --directory SERVER_DIR` to view outputs of the
-experiment.
+run `python -m experimenttools.sessionserver SESSION_DIR` to serve the sesssion.
 
 """
 
-from experimenttools.sessions import Session, SessionManager, SessionServer
+from experimenttools.sessions import Session, SessionManager
+from experimenttools.sessionserver import SessionServer

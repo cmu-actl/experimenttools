@@ -47,13 +47,17 @@ if __name__ == "__main__":
     main()
 ```
 
-For more examples, see the `examples` directory.
-
 ## Documentation
 
 Documentation is avaialbe at https://cmu-actl.github.io/experimenttools/
 
 ## Developing
+
+Tests use unittest and doctest.
+
+```shell
+make test
+```
 
 Use [pre-commit](https://pre-commit.com) to format and lint code before committing.
 
