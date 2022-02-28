@@ -224,8 +224,6 @@ class SessionManager:
                 If the manager has already begun to manage the session.
 
         """
-        if self._managing:
-            raise RuntimeError("SessionManager is already managing")
         self._log(2, "Beginning management")
         self._managing = True
         self._session.add_callback(self._session_callback)
@@ -245,8 +243,6 @@ class SessionManager:
                 If the manager is not currently managing the session.
 
         """
-        if not self._managing:
-            raise RuntimeError("SessionManager is already closed")
         self._log(2, "Ending management")
         self._session.remove_callback(self._session_callback)
         for m in self._session.metrics:

@@ -257,8 +257,6 @@ class SessionManager:
                 If the manager has already begun to manage the session.
 
         &#34;&#34;&#34;
-        if self._managing:
-            raise RuntimeError(&#34;SessionManager is already managing&#34;)
         self._log(2, &#34;Beginning management&#34;)
         self._managing = True
         self._session.add_callback(self._session_callback)
@@ -278,8 +276,6 @@ class SessionManager:
                 If the manager is not currently managing the session.
 
         &#34;&#34;&#34;
-        if not self._managing:
-            raise RuntimeError(&#34;SessionManager is already closed&#34;)
         self._log(2, &#34;Ending management&#34;)
         self._session.remove_callback(self._session_callback)
         for m in self._session.metrics:
@@ -750,8 +746,6 @@ metrics.</dd>
                 If the manager has already begun to manage the session.
 
         &#34;&#34;&#34;
-        if self._managing:
-            raise RuntimeError(&#34;SessionManager is already managing&#34;)
         self._log(2, &#34;Beginning management&#34;)
         self._managing = True
         self._session.add_callback(self._session_callback)
@@ -771,8 +765,6 @@ metrics.</dd>
                 If the manager is not currently managing the session.
 
         &#34;&#34;&#34;
-        if not self._managing:
-            raise RuntimeError(&#34;SessionManager is already closed&#34;)
         self._log(2, &#34;Ending management&#34;)
         self._session.remove_callback(self._session_callback)
         for m in self._session.metrics:
@@ -853,8 +845,6 @@ been updated.</p>
             If the manager is not currently managing the session.
 
     &#34;&#34;&#34;
-    if not self._managing:
-        raise RuntimeError(&#34;SessionManager is already closed&#34;)
     self._log(2, &#34;Ending management&#34;)
     self._session.remove_callback(self._session_callback)
     for m in self._session.metrics:
@@ -887,8 +877,6 @@ been updated.</p>
             If the manager has already begun to manage the session.
 
     &#34;&#34;&#34;
-    if self._managing:
-        raise RuntimeError(&#34;SessionManager is already managing&#34;)
     self._log(2, &#34;Beginning management&#34;)
     self._managing = True
     self._session.add_callback(self._session_callback)
