@@ -27,6 +27,7 @@ Examples
 from time import time as curr_time
 
 import holoviews as hv
+import pandas as pd
 
 
 class Metric:
@@ -91,7 +92,7 @@ class SerializableMetric(Metric):
 
     """
 
-    def serialize(self, file):
+    def serialize(self, filename):
         """Write metric history to a file."""
         raise NotImplementedError
 
@@ -237,9 +238,9 @@ class NumericMetric(SerializableMetric, PlottableMetric):
         """Get the list of recorded metric values."""
         return self._values
 
-    def serialize(self, file):
+    def serialize(self, filename):
         """Write metric history to a file, one line per value."""
-        with open(f"{file}.txt", "a") as f:
+        with open(f"{filename}.csv", "a") as f:
             if self._serialization_idx == 0:
                 f.write("value\n")
             for value in self._values[self._serialization_idx :]:
@@ -256,9 +257,9 @@ class NumericMetric(SerializableMetric, PlottableMetric):
 class TimedNumericMetric(NumericMetric, TimedMetric):
     """Track the change of a numeric metric over time."""
 
-    def serialize(self, file):
+    def serialize(self, filename):
         """Write metric history to a file as a csv (time,value)."""
-        with open(f"{file}.txt", "a") as f:
+        with open(f"{filename}.csv", "a") as f:
             if self._serialization_idx == 0:
                 f.write("time,value\n")
             for time, value in zip(
@@ -271,3 +272,55 @@ class TimedNumericMetric(NumericMetric, TimedMetric):
     def plot(self):
         """Plot metric history as a line plot with seconds as the x-axis."""
         return hv.Curve((self._times, self._values), "Seconds", self.name)
+
+
+class ParameterSetMetric(SerializableMetric, PlottableMetric):
+    """Store and display a set of unchanging parameters to an experiment."""
+
+    def __init__(self, name, params, *args, **kwargs):
+        """Create a new `ParameterSetMetric` by passing in a set of parameters.
+
+        The parameters must be defined at initialization. The `__call__`
+        method does not work for this class. Additionally, the `initial_value`
+        arugment is invalid for this class.
+
+        Parameters
+        ----------
+        name: str
+                The name of the metric.
+        params: dict of str:object
+                The parameters to store and display.
+
+        Raises
+        ------
+        TypeError
+                If `initial_value` is specified.
+
+        """
+        if "initial_value" in kwargs:
+            raise TypeError(
+                "keyword argument 'initial_value' not valid for 'ParameterSetMetric' "
+                "objects"
+            )
+        keys = list(params.keys())
+        values = [str(params[k]) for k in keys]
+        self._params = pd.DataFrame({"parameter": keys, "value": values})
+        self._serialized = False
+        self._plot = None
+        super().__init__(name, *args, **kwargs)
+
+    def __call__(self, *args, **kwargs):
+        """Raise a `TypeError` if called."""
+        raise TypeError("'ParameterSetMetric' object is not callable")
+
+    def serialize(self, filename):
+        """Write parameters to a csv."""
+        if not self._serialized:
+            self._params.to_csv(f"{filename}.csv", index=False)
+            self._serialized = True
+
+    def plot(self):
+        """Plot parameters as a table."""
+        if not self._plot:
+            self._plot = hv.Table(self._params)
+        return self._plot

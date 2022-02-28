@@ -26,10 +26,10 @@ class TestSessions(unittest.TestCase):
 
             tmpdir = Path(tmpdir)
             self.assertTrue((tmpdir / "index.html").is_file())
-            with open(tmpdir / "serialized" / "m0.txt") as f:
+            with open(tmpdir / "serialized" / "m0.csv") as f:
                 m0_actual = [int(l) for l in f.read().split()[1:]]
             self.assertListEqual(m0_expected, m0_actual)
-            with open(tmpdir / "serialized" / "m1.txt") as f:
+            with open(tmpdir / "serialized" / "m1.csv") as f:
                 m1_actual = [int(l.split(",")[-1]) for l in f.read().split()[1:]]
             self.assertListEqual(m1_expected, m1_actual)
 
@@ -68,7 +68,7 @@ class TestSessions(unittest.TestCase):
             m0_expected = m0_expected[:-1]
             tmpdir = Path(tmpdir)
             self.assertTrue((tmpdir / "index.html").is_file())
-            with open(tmpdir / "serialized" / "m0.txt") as f:
+            with open(tmpdir / "serialized" / "m0.csv") as f:
                 m0_actual = [int(l) for l in f.read().split()[1:]]
             self.assertListEqual(m0_expected, m0_actual)
 
@@ -92,7 +92,7 @@ class TestSessions(unittest.TestCase):
 
             tmpdir = Path(tmpdir)
             self.assertTrue((tmpdir / "index.html").is_file())
-            with open(tmpdir / "serialized" / "m0.txt") as f:
+            with open(tmpdir / "serialized" / "m0.csv") as f:
                 m0_actual = [int(l) for l in f.read().split()[1:]]
             self.assertListEqual(m0_expected, m0_actual)
 
@@ -115,7 +115,7 @@ class TestSessions(unittest.TestCase):
 
             tmpdir = Path(tmpdir)
             self.assertTrue((tmpdir / "index.html").is_file())
-            with open(tmpdir / "serialized" / "m0.txt") as f:
+            with open(tmpdir / "serialized" / "m0.csv") as f:
                 m0_actual = [int(l) for l in f.read().split()[1:]]
             self.assertListEqual(m0_expected, m0_actual)
 
