@@ -16,10 +16,6 @@ import holoviews as hv
 from experimenttools.callbacks import LambdaSessionCallback
 from experimenttools.metrics import PlottableMetric, SerializableMetric
 
-# from matplotlib import pyplot
-
-# pyplot.switch_backend("agg")
-# hv.extension("matplotlib")
 hv.extension("bokeh")
 
 
